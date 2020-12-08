@@ -24,27 +24,27 @@ class Controller extends AbstractController
 // get doctor
         $doctor = $this->getDoctorById($manager, $doctorId);
 
-        if ($doctor) {
-            /** @var SlotEntity[] $array */
-            $array = $doctor->slots();
-
-            if (count($array)) {
-                $slots = [];
-                foreach ($array as $slot) {
-                    $slots[] = [
-                        'id'        => $slot->getId(),
-                        'day'       => $slot->getDay()->format('Y-m-d'),
-                        'from_hour' => $slot->getFromHour(),
-                        'duration'  => $slot->getDuration(),
-                    ];
-                }
-                return new JsonResponse($slots);
-            } else {
-                return new JsonResponse([]);
-            }
-        } else {
+        if ($doctor === null) {
             return new JsonResponse([], 404);
         }
+
+        /** @var SlotEntity[] $array */
+        $array = $doctor->slots();
+        if (count($array) === 0) {
+            return new JsonResponse([]);
+        }
+
+        $slots = [];
+        foreach ($array as $slot) {
+            $slots[] = [
+                'id'        => $slot->getId(),
+                'day'       => $slot->getDay()->format('Y-m-d'),
+                'from_hour' => $slot->getFromHour(),
+                'duration'  => $slot->getDuration(),
+            ];
+        }
+
+        return new JsonResponse($slots);
     }
 
     private function getDoctorById(EntityManagerInterface $manager, $id): ?DoctorEntity
@@ -101,18 +101,18 @@ class Controller extends AbstractController
 // get doctor
         $doctor = $this->getDoctorById($manager, $id);
 
-        if ($doctor) {
-            return new JsonResponse(
-                [
-                    'id'             => $doctor->getId(),
-                    'firstName'      => $doctor->getFirstName(),
-                    'lastName'       => $doctor->getLastName(),
-                    'specialization' => $doctor->getSpecialization(),
-                ]
-            );
-        } else {
+        if ($doctor === null) {
             return new JsonResponse([], 404);
         }
+
+        return new JsonResponse(
+            [
+                'id'             => $doctor->getId(),
+                'firstName'      => $doctor->getFirstName(),
+                'lastName'       => $doctor->getLastName(),
+                'specialization' => $doctor->getSpecialization(),
+            ]
+        );
     }
 
     public function createDoctor(Request $request): JsonResponse
@@ -133,15 +133,14 @@ class Controller extends AbstractController
 // get doctor
         $doctor = $this->getDoctorById($manager, $doctorId);
 
-        if ($doctor) {
-
-            $slot = $this->createSlotFromRequest($request, $doctor);
-            $this->persistSlot($manager, $slot);
-
-// result
-            return new JsonResponse(['id' => $slot->getId()]);
-        } else {
+        if ($doctor === null) {
             return new JsonResponse([], 404);
         }
+
+        $slot = $this->createSlotFromRequest($request, $doctor);
+        $this->persistSlot($manager, $slot);
+
+// result
+        return new JsonResponse(['id' => $slot->getId()]);
     }
 }
