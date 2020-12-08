@@ -22,11 +22,11 @@ class Controller extends AbstractController
         if ($request->getMethod() === 'GET') {
 //get doctor
             $id = $request->get('id');
-            /** @var EntityManagerInterface $man */
-            $man = $this->getDoctrine()->getManager();
+            /** @var EntityManagerInterface $manager */
+            $manager = $this->getDoctrine()->getManager();
 
 // get doctor
-            $doctor = $man->createQueryBuilder()
+            $doctor = $manager->createQueryBuilder()
                 ->select('doctor')
                 ->from(DoctorEntity::class, 'doctor')
                 ->where('doctor.id=:id')
@@ -47,15 +47,15 @@ class Controller extends AbstractController
             }
         } elseif ($request->getMethod() === 'POST') {
 //add doctor
-            $man = $this->getDoctrine()->getManager();
+            $manager = $this->getDoctrine()->getManager();
 
             $doctor = new DoctorEntity();
             $doctor->setFirstName($request->get('firstName'));
             $doctor->setLastName($request->get('lastName'));
             $doctor->setSpecialization($request->get('specialization'));
 
-            $man->persist($doctor);
-            $man->flush();
+            $manager->persist($doctor);
+            $manager->flush();
 
 // result
             return new JsonResponse(['id' => $doctor->getId()]);
@@ -66,10 +66,10 @@ class Controller extends AbstractController
 
     function slots(int $doctorId, Request $request)
     {
-        /** @var EntityManagerInterface $man */
-        $man = $this->getDoctrine()->getManager();
+        /** @var EntityManagerInterface $manager */
+        $manager = $this->getDoctrine()->getManager();
 // get doctor
-        $doc = $man->createQueryBuilder()
+        $doctor = $manager->createQueryBuilder()
             ->select('doctor')
             ->from(DoctorEntity::class, 'doctor')
             ->where('doctor.id=:id')
@@ -78,24 +78,24 @@ class Controller extends AbstractController
             ->getQuery()
             ->getOneOrNullResult();
 
-        if ($doc) {
+        if ($doctor) {
 
             if ($request->getMethod() === 'GET') {
 //get slots
                 /** @var SlotEntity[] $array */
-                $array = $doc->slots();
+                $array = $doctor->slots();
 
                 if (count($array)) {
-                    $res = [];
+                    $slots = [];
                     foreach ($array as $slot) {
-                        $res[] = [
+                        $slots[] = [
                             'id' => $slot->getId(),
                             'day' => $slot->getDay()->format('Y-m-d'),
                             'from_hour' => $slot->getFromHour(),
                             'duration' => $slot->getDuration()
                         ];
                     }
-                    return new JsonResponse($res);
+                    return new JsonResponse($slots);
                 } else {
                     return new JsonResponse([]);
                 }
@@ -103,12 +103,12 @@ class Controller extends AbstractController
 // add slot
                 $slot = new SlotEntity();
                 $slot->setDay(new DateTime($request->get('day')));
-                $slot->setDoctor($doc);
+                $slot->setDoctor($doctor);
                 $slot->setDuration((int)$request->get('duration'));
                 $slot->setFromHour($request->get('from_hour'));
 
-                $man->persist($slot);
-                $man->flush();
+                $manager->persist($slot);
+                $manager->flush();
 
 // result
                 return new JsonResponse(['id' => $slot->getId()]);
