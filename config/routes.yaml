@@ -17,7 +17,7 @@ slots:
     methods: GET
     controller: App\Controller\Controller::slots
 
-createSlot:
+addSlot:
     path: /slots/{doctorId}
     methods: POST
-    controller: App\Controller\Controller::createSlot
+    controller: App\Action\AddSlot
