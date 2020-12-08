@@ -26,14 +26,7 @@ class Controller extends AbstractController
             $manager = $this->getDoctrine()->getManager();
 
 // get doctor
-            $doctor = $manager->createQueryBuilder()
-                ->select('doctor')
-                ->from(DoctorEntity::class, 'doctor')
-                ->where('doctor.id=:id')
-                ->setParameter('id', $id)
-                ->setMaxResults(1)
-                ->getQuery()
-                ->getOneOrNullResult();
+            $doctor = $this->getDoctorById($manager, $id);
 
             if ($doctor) {
                 return new JsonResponse([
@@ -69,14 +62,7 @@ class Controller extends AbstractController
         /** @var EntityManagerInterface $manager */
         $manager = $this->getDoctrine()->getManager();
 // get doctor
-        $doctor = $manager->createQueryBuilder()
-            ->select('doctor')
-            ->from(DoctorEntity::class, 'doctor')
-            ->where('doctor.id=:id')
-            ->setParameter('id', $doctorId)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+        $doctor = $this->getDoctorById($manager, $doctorId);
 
         if ($doctor) {
 
@@ -116,6 +102,18 @@ class Controller extends AbstractController
         } else {
             return new JsonResponse([], 404);
         }
+    }
+
+    protected function getDoctorById(EntityManagerInterface $manager, $id): ?DoctorEntity
+    {
+        return $manager->createQueryBuilder()
+            ->select('doctor')
+            ->from(DoctorEntity::class, 'doctor')
+            ->where('doctor.id=:id')
+            ->setParameter('id', $id)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
 }
