@@ -17,41 +17,6 @@ class Controller extends AbstractController
         return new JsonResponse('ReallyDirty API v1.0');
     }
 
-    function doctor(Request $request)
-    {
-        if ($request->getMethod() === 'GET') {
-//get doctor
-            $id = $request->get('id');
-            /** @var EntityManagerInterface $manager */
-            $manager = $this->getDoctrine()->getManager();
-
-// get doctor
-            $doctor = $this->getDoctorById($manager, $id);
-
-            if ($doctor) {
-                return new JsonResponse([
-                    'id' => $doctor->getId(),
-                    'firstName' => $doctor->getFirstName(),
-                    'lastName' => $doctor->getLastName(),
-                    'specialization' => $doctor->getSpecialization(),
-                ]);
-            } else {
-                return new JsonResponse([], 404);
-            }
-        } elseif ($request->getMethod() === 'POST') {
-//add doctor
-            $manager = $this->getDoctrine()->getManager();
-
-            $doctor = $this->createDoctorFromRequest($request);
-            $this->persistDoctor($manager, $doctor);
-
-// result
-            return new JsonResponse(['id' => $doctor->getId()]);
-        }
-
-        //TODO other methods?
-    }
-
     function slots(int $doctorId, Request $request)
     {
         /** @var EntityManagerInterface $manager */
@@ -60,33 +25,22 @@ class Controller extends AbstractController
         $doctor = $this->getDoctorById($manager, $doctorId);
 
         if ($doctor) {
+            /** @var SlotEntity[] $array */
+            $array = $doctor->slots();
 
-            if ($request->getMethod() === 'GET') {
-//get slots
-                /** @var SlotEntity[] $array */
-                $array = $doctor->slots();
-
-                if (count($array)) {
-                    $slots = [];
-                    foreach ($array as $slot) {
-                        $slots[] = [
-                            'id' => $slot->getId(),
-                            'day' => $slot->getDay()->format('Y-m-d'),
-                            'from_hour' => $slot->getFromHour(),
-                            'duration' => $slot->getDuration()
-                        ];
-                    }
-                    return new JsonResponse($slots);
-                } else {
-                    return new JsonResponse([]);
+            if (count($array)) {
+                $slots = [];
+                foreach ($array as $slot) {
+                    $slots[] = [
+                        'id'        => $slot->getId(),
+                        'day'       => $slot->getDay()->format('Y-m-d'),
+                        'from_hour' => $slot->getFromHour(),
+                        'duration'  => $slot->getDuration(),
+                    ];
                 }
-            } elseif ($request->getMethod() === 'POST') {
-// add slot
-                $slot = $this->createSlotFromRequest($request, $doctor);
-                $this->persistSlot($manager, $slot);
-
-// result
-                return new JsonResponse(['id' => $slot->getId()]);
+                return new JsonResponse($slots);
+            } else {
+                return new JsonResponse([]);
             }
         } else {
             return new JsonResponse([], 404);
@@ -136,5 +90,58 @@ class Controller extends AbstractController
     {
         $manager->persist($slot);
         $manager->flush();
+    }
+
+    public function doctor(Request $request): JsonResponse
+    {
+        $id = $request->get('id');
+        /** @var EntityManagerInterface $manager */
+        $manager = $this->getDoctrine()->getManager();
+
+// get doctor
+        $doctor = $this->getDoctorById($manager, $id);
+
+        if ($doctor) {
+            return new JsonResponse(
+                [
+                    'id'             => $doctor->getId(),
+                    'firstName'      => $doctor->getFirstName(),
+                    'lastName'       => $doctor->getLastName(),
+                    'specialization' => $doctor->getSpecialization(),
+                ]
+            );
+        } else {
+            return new JsonResponse([], 404);
+        }
+    }
+
+    public function createDoctor(Request $request): JsonResponse
+    {
+        $manager = $this->getDoctrine()->getManager();
+
+        $doctor = $this->createDoctorFromRequest($request);
+        $this->persistDoctor($manager, $doctor);
+
+// result
+        return new JsonResponse(['id' => $doctor->getId()]);
+    }
+
+    public function createSlot(int $doctorId, Request $request): JsonResponse
+    {
+        /** @var EntityManagerInterface $manager */
+        $manager = $this->getDoctrine()->getManager();
+// get doctor
+        $doctor = $this->getDoctorById($manager, $doctorId);
+
+        if ($doctor) {
+
+            $slot = $this->createSlotFromRequest($request, $doctor);
+            $this->persistSlot($manager, $slot);
+
+// result
+            return new JsonResponse(['id' => $slot->getId()]);
+        } else {
+            return new JsonResponse([], 404);
+        }
     }
 }
